@@ -46,8 +46,9 @@ subsequent turns. Each turn is limited to 30 minutes. Queued tasks older than
 ## Security and deployment boundary
 
 The agent runs as the normal Unix user through `setpriv --no-new-privs` and a
-dedicated Codex filesystem/network profile. No approval/escalation requests are
-granted. Requests for missing information should be plain Ukrainian messages.
+dedicated Codex filesystem/network profile. Native sandbox approval/escalation
+requests are never granted; root and host-change batches use the separate
+Telegram approval flow. Requests for missing information should be plain Ukrainian messages.
 
 New projects remain writable under `/home/maksym/projects`; all four live
 project source trees remain read-only. Secret filename patterns, SSH/AWS/login
