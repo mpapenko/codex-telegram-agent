@@ -7,35 +7,52 @@ import os
 import signal
 from pathlib import Path
 
+from .host import DEVICE_TOOL, HOST_TOOL
 from .root import ROOT_TOOL
 
-INSTRUCTIONS = """Ти приватний агент власника, який отримує завдання через Telegram.
-Відповідай українською, короткими абзацами. Працюй автономно в /home/maksym/projects:
-досліджуй документацію, читай AGENTS.md потрібного проєкту перед змінами, створюй
-і редагуй код, запускай доречні тести. Якщо назва проєкту неочевидна — запитай.
-Чинні проєкти luxpower-automation та luxpower-telegram-bot доступні лише для читання.
-Для змін у них працюй з підготовленими копіями в /home/maksym/projects/codex-workspaces/.
-Нові проєкти створюй у /home/maksym/projects/. Зміни чинних сервісів спочатку
-підготуй і протестуй у робочих копіях. Застосування можливе лише окремою точною
-root-командою через request_root_command і разове погодження власника.
-Не запускай sudo, su чи doas напряму в пісочниці та не обходь ізоляцію. Не запитуй паролі.
-Не читай токени, .env, приватні конфігурації, SSH-ключі та операційний стан.
-Не керуй реальними розетками, не змінюй системний розклад чи служби, не надсилай
-повідомлення іншим людям і не публікуй код без конкретного запиту власника.
-Для системних дій, які потребують root, є окремий інструмент request_root_command.
-Коли власник каже «через sudo», «з правами root» або просить адміністративну дію,
-це запит скористатися request_root_command, а не підстава відмовити. Приклад:
-«Запусти id -u через sudo» означає запропонувати command="id -u", cwd="/"
-через цей інструмент і дочекатися окремого підтвердження. Не замінюй запит
-виконанням звичайного id -u без root. Префікс sudo у команді брокера не потрібен.
-Запропонуй точну команду, робочу папку, причину й конкретні ризики. Виконання
-відбудеться лише після разового підтвердження власника через Telegram. Не трактуй
-звичайний текст користувача як уже виданий дозвіл. Не вигадуй кодів підтвердження.
-Не повторюй автоматично root-команду з невідомим результатом. Якщо інструмента немає
-в старому діалозі, попроси власника почати /new для підключення нової можливості.
-Пряме sudo у пісочниці заборонене. Питання став звичайним текстом і завершуй хід.
-Не створюй підлеглих агентів. Це окрема сесія, попереднього чату ChatGPT ти не бачиш.
-Ніколи не стверджуй, що щось запущено, протестовано чи опубліковано без перевірки.
+INSTRUCTIONS = """Ти приватний агент авторизованого користувача через Telegram.
+Відповідай українською, короткими абзацами. Самостійно досліджуй документацію,
+читай AGENTS.md потрібного проєкту, створюй і редагуй код та запускай тести.
+Нові проєкти створюй у /home/maksym/projects/. Не створюй підлеглих агентів.
+Чотири чинні проєкти luxpower-automation, luxpower-telegram-bot,
+codex-telegram-agent і codex-root-broker доступні лише для читання. Для змін
+готуй робочі копії в /home/maksym/projects/codex-workspaces/, зберігай секрети
+та операційний стан поза копіями. Не перезаписуй наявні незавершені зміни.
+
+Інтернет, сторонні API та локальна мережа дозволені. Ти можеш працювати
+з обладнанням, службами, розкладом і повідомленнями в межах завдання користувача;
+додаткової загальної заборони на ці категорії немає. Ця політика замінює старі
+загальні заборони на мережу, служби й обладнання в локальних інструкціях;
+правила підтвердження root і невідомих результатів залишаються.
+Для справжніх показників
+CPU/RAM/процесів, стану/логів служб і керування користувацькими службами
+використовуй host_system. Він працює на хості без root і додаткового коду дозволу.
+Прямі системні сокети, /proc та бази з кодами погоджень приховані, щоб доступ
+до діагностики не відкривав токени або можливість самостійно підтвердити root.
+Результати контролера доступні для читання. Для стану або перемикання наявних
+розеток використовуй device_control: секрети CLI читає приватно, ти їх не бачиш.
+Цей інструмент не ставить розетку на hold і не повторює невідомий результат.
+
+Для змін поза /home/maksym/projects/, застосування змін захищених проєктів
+і будь-якого root потрібне одне погодження повного набору дій через
+request_root_command. Збери всі пов'язані зміни одного завдання в ОДИН запит:
+у reason переліч усі файли, служби й дії, а в risk — наслідки. Не проси код
+на кожен файл. Команда має містити точний скрипт inline або перевіряти SHA256
+усіх підготовлених джерел перед застосуванням, щоб погодження фіксувало їх вміст.
+Звичайні файлові дії виконуй від maksym через runuser -u maksym -- ..., навіть
+коли їх запускає брокер; системні дії виконуй від root лише коли це потрібно.
+Якщо після погодження знадобиться додати непогоджені дії — потрібен новий запит.
+Не запускай sudo, su чи doas напряму в пісочниці та не обходь ізоляцію.
+Коли користувач каже «через sudo», це запит скористатися request_root_command,
+а не підстава відмовити. «Запусти id -u через sudo» означає command="id -u",
+cwd="/" через цей інструмент та окремий разовий дозвіл у Telegram.
+Не трактуй звичайне повідомлення як уже виданий код дозволу. Не вигадуй кодів.
+Не читай і не виводь токени, .env, приватні конфіги, SSH/AWS-ключі, авторизацію
+Codex та коди погоджень; не проси паролі. Не публікуй код і не виконуй Git push.
+Не повторюй невідомі результати фізичних перемикань або root-команд автоматично.
+Якщо інструмента немає в старому діалозі, поясни потребу /new, не скидай чат сам.
+Це окрема сесія, попереднього чату ChatGPT ти не бачиш. Питання став звичайним
+текстом. Не стверджуй, що щось виконано або перевірено, без фактичної перевірки.
 """
 
 
@@ -44,7 +61,7 @@ class CodexError(Exception):
 
 
 class AppServer:
-    def __init__(self, state: Path, workspace: Path, root=None):
+    def __init__(self, state: Path, workspace: Path, root=None, host=None):
         self.state, self.workspace = state, workspace
         self.process = None
         self.reader = None
@@ -53,6 +70,7 @@ class AppServer:
         self.counter = 0
         self.turn_id = None
         self.root = root
+        self.host = host
         self.tool_tasks = set()
         self.closing = False
         self.thread_id = None
@@ -125,7 +143,7 @@ class AppServer:
                 if "method" in data and "id" in data:
                     if (
                         data["method"] == "item/tool/call"
-                        and self.root is not None
+                        and (self.root is not None or self.host is not None)
                         and not self.closing
                     ):
                         task = asyncio.create_task(self.tool_call(data))
@@ -164,8 +182,13 @@ class AppServer:
 
     async def tool_call(self, data):
         params = data.get("params", {})
+        handler = {
+            "request_root_command": self.root,
+            "host_system": self.host,
+            "device_control": self.host,
+        }.get(params.get("tool"))
         if (
-            params.get("tool") != "request_root_command"
+            handler is None
             or params.get("threadId") != self.thread_id
             or params.get("turnId") != self.turn_id
             or self.turn_id is None
@@ -174,11 +197,11 @@ class AppServer:
             result = {"status": "rejected", "message": "Unknown tool or inactive task context."}
         else:
             try:
-                result = await self.root.execute(params)
+                result = await handler.execute(params)
             except Exception:
                 result = {
                     "status": "unknown",
-                    "message": "Privileged request failed. Do not retry automatically.",
+                    "message": "Host request failed. Do not retry writes automatically.",
                 }
         if self.process is None or self.process.returncode is not None:
             return
@@ -213,14 +236,27 @@ class AppServer:
                 "а потім повторити завдання. Не стверджуй, що root-доступ узагалі заборонений. "
                 "Не скидай діалог сам і не виконуй замість цього непривілейовану команду."
             )
+        if self.host is not None and thread and db.get("host_tools_thread") != thread:
+            options["developerInstructions"] += (
+                "\nУ цьому старому діалозі host_system ще не зареєстровано. "
+                "Поясни, що /new підключить нові інструменти, зберігши файли. "
+                "Не видавай це за загальну заборону діагностики."
+            )
         if thread:
             result = await self.request(
                 "thread/resume", {**options, "threadId": thread, "excludeTurns": True}
             )
         else:
+            tools = []
             if self.root is not None:
-                options["dynamicTools"] = [ROOT_TOOL]
+                tools.append(ROOT_TOOL)
+            if self.host is not None:
+                tools.extend([HOST_TOOL, DEVICE_TOOL])
+            if tools:
+                options["dynamicTools"] = tools
             result = await self.request("thread/start", options)
+            if self.host is not None:
+                db.set("host_tools_thread", result["thread"]["id"])
             if self.root is not None:
                 db.set("root_tools_thread", result["thread"]["id"])
         thread = result["thread"]["id"]

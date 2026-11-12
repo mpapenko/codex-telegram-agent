@@ -11,7 +11,9 @@ ROOT_TOOL = {
     "description": (
         "Propose one exact root shell command for the owner's explicit, single-use "
         "Telegram approval. This waits for approval and execution; never approve it yourself. "
-        "Use only when ordinary sandboxed tools cannot perform the requested system action. "
+        "Use for root, protected-project deployment or a complete batch of host file changes. "
+        "Group all related files/actions in one request, not one request per file. "
+        "List every file/action in reason. Use inline content or verify source hashes. "
         "Never request a password. Never automatically repeat an uncertain command."
     ),
     "inputSchema": {

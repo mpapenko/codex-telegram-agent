@@ -3,8 +3,8 @@
 ## Optional root broker
 
 The owner-authorized `../codex-root-broker` integration adds a dynamic tool to new
-conversations. Ordinary tools retain all existing restrictions. The tool proposes
-an exact privileged command and waits for a separate owner-and-extended-user Telegram approval;
+conversations. Ordinary tools use the permission policy described below. The tool proposes
+an exact root command or complete approved host-change batch and waits for a separate owner-and-extended-user Telegram approval;
 this worker cannot approve commands itself. No passwords are used. See that
 project's README for the one-time SSH installation, real root trust boundary, and
 first manual test. Existing dialogues need `/new` to register the new tool; their
@@ -49,26 +49,53 @@ The agent runs as the normal Unix user through `setpriv --no-new-privs` and a
 dedicated Codex filesystem/network profile. No approval/escalation requests are
 granted. Requests for missing information should be plain Ukrainian messages.
 
-Filesystem access is limited to runtime dependencies, temporary space, and
-`/home/maksym/projects`. Protected paths and known credential filename patterns
-are denied. The real `luxpower-automation`, `luxpower-telegram-bot`, and this worker
-source are read-only. Live controller state, the bot's token/config/database,
-the worker's credentials/database, SSH keys, and host process access are denied.
+New projects remain writable under `/home/maksym/projects`; all four live
+project source trees remain read-only. Secret filename patterns, SSH/AWS/login
+credentials, private configs and approval queues stay denied. Saved controller
+JSON and plug observations are readable. The raw Telegram SQLite outbox and
+worker runtime are still private because they contain conversations/root codes.
 
-Prepared source copies live under `/home/maksym/projects/codex-workspaces/`.
-They exclude `.env`, live config, state, Git metadata, and virtual environments.
-They are initial snapshots, not automatically synchronized mirrors. Agent tasks
-can implement and test changes there, then report what is ready for review and
-deployment. This avoids edits taking effect in the next scheduled controller run.
-Existing services are never automatically redeployed by the worker. New projects
-may be created under `projects`; supplying secrets and managing services are
-separate actions. General task scheduling/service management is not enabled in
-this first bridge: system configuration and its bus are outside the sandbox.
+Outside-project writes and deployment of protected code use a **single approved
+batch** through `request_root_command`: list all files/services/actions in the
+reason, show their effects, and include inline content or verify source hashes.
+One approval covers the whole fixed change set, not one file. Ordinary user-file
+operations in the approved batch should run as `maksym` (`runuser -u maksym --`);
+root is used only where needed. Native sandbox escalation remains disabled.
+Direct outside-project writes stay technically blocked so this approval cannot
+be bypassed. New unapproved actions require a new batch rather than broadening
+an already approved request.
 
-The network proxy allows selected documentation/package hosts in
-`deploy/codex-config.toml`. Local/private targets and unrelated destinations are
-not allowed. Native live web search is enabled. Provider/model access, quotas,
-and external account permissions still depend on the saved ChatGPT login.
+Prepared source copies of all four projects live under
+`/home/maksym/projects/codex-workspaces/`, excluding secrets/state/Git/venvs.
+Existing copies are never overwritten. Agent work can edit/test these copies
+and propose a reviewed deployment batch. Copies are snapshots, not automatic
+mirrors: inspect existing unfinished work before updating them.
+
+Internet and LAN command access are now unrestricted by domain (`network_proxy`
+is disabled); local binding is enabled. Native live web search remains enabled.
+The general instruction bans on equipment, messages, services and scheduling
+have been removed. Public Git pushes and subagents remain disallowed.
+
+The `host_system` dynamic tool supplies actual host CPU/RAM/disk/process data,
+selected service fields, logs of the four controlled services, and user-service
+start/stop/restart without an approval code. It executes fixed argv as `maksym`,
+not arbitrary shell commands. Process arguments/environments, arbitrary log
+sources and manager property changes are not exposed. System-service mutations
+and restarting the worker itself use an approved batch. The latter would kill
+the active tool turn if performed inline.
+
+The `device_control` dynamic tool reads/switches `bathroom`, `kitchen` or `test`
+through the existing controller CLI on the host. Credentials stay private in
+the CLI. ON/OFF is immediate, does not set/release a hold, and never retries an
+uncertain result. Development tests use fake outputs; no live switches are run.
+
+Local runtime sockets under `/run` are readable. Direct `/proc` and private
+D-Bus/approval sockets stay hidden to prevent secret
+reads and self-approval; `host_system` provides the requested functionality.
+An unrestricted user-manager bus could rewrite the trusted frontend environment
+and bypass its role boundary, so only explicit service operations are bridged.
+New conversations register `host_system` and `device_control`; existing chats
+need `/new` once, after work completes. Their old history is not deleted.
 
 The worker has its own Codex config/history under
 `~/.local/share/codex-telegram/codex` and initially references the existing CLI
@@ -77,9 +104,11 @@ tools cannot. Do not pass secrets in Telegram. The frontend rejects obvious key
 and password patterns, but that heuristic is not comprehensive secret detection.
 Never treat chat confirmation as an OS authentication grant.
 
-Filesystem profiles are beta. Actual installed sandbox probes verified project
-writes, denied credential/state opens (without reading contents), denied writes
-to live code, and isolation from host processes. These controls do not protect
+Filesystem profiles are beta. Real installed sandbox probes verified project
+writes, denied credential/approval-database opens (without reading contents),
+denied direct outside/live-code writes, access to a harmless localhost server
+and an HTTPS host outside the former allowlist, and denial of direct manager-bus
+access. Host process diagnostics are separately bridged. These controls do not protect
 against another unrestricted process using the same Unix account.
 
 ## Queues and failures

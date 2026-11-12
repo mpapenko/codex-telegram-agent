@@ -11,6 +11,7 @@ from pathlib import Path
 
 from .codex import AppServer
 from .db import Database
+from .host import HostTools
 from .root import RootApprovals
 
 
@@ -219,7 +220,7 @@ async def serve(state: Path, workspace: Path, socket_path: Path):
             db = Database(path)
             db.recover()
             root = RootApprovals(db)
-            return Worker(db, AppServer(state, workspace, root), root)
+            return Worker(db, AppServer(state, workspace, root, HostTools()), root)
 
         router = Router(workers, access_path, factory)
         router.refresh()

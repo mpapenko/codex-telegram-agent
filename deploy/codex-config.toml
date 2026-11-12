@@ -5,7 +5,7 @@ default_permissions = "telegram"
 web_search = "live"
 
 [features]
-network_proxy = true
+network_proxy = false
 
 [agents]
 enabled = false
@@ -14,7 +14,7 @@ enabled = false
 "/home/maksym/projects" = true
 
 [permissions.telegram.filesystem]
-glob_scan_max_depth = 5
+glob_scan_max_depth = 7
 ":minimal" = "read"
 ":slash_tmp" = "write"
 ":tmpdir" = "write"
@@ -25,8 +25,10 @@ glob_scan_max_depth = 5
 "/home/maksym/projects/luxpower-telegram-bot" = "read"
 "/home/maksym/projects/.codex" = "deny"
 "/home/maksym/projects/.agents" = "deny"
-"/home/maksym/projects/luxpower-automation/state" = "deny"
-"/home/maksym/projects/luxpower-telegram-bot/state" = "deny"
+"/home/maksym/projects/luxpower-automation/state" = "read"
+"/home/maksym/projects/luxpower-telegram-bot/state" = "read"
+"/home/maksym/projects/luxpower-telegram-bot/state/bot.sqlite3" = "deny"
+"/home/maksym/projects/luxpower-telegram-bot/state/codex.sock" = "deny"
 "/home/maksym/projects/luxpower-telegram-bot/config.toml" = "deny"
 "/home/maksym/.codex/auth.json" = "deny"
 "/home/maksym/.codex/config.toml" = "deny"
@@ -37,7 +39,20 @@ glob_scan_max_depth = 5
 "/home/maksym/.ssh" = "deny"
 "/home/maksym/.aws" = "deny"
 "/home/maksym/.config" = "deny"
-"/run" = "deny"
+"/home/maksym/.git-credentials" = "deny"
+"/home/maksym/.netrc" = "deny"
+"/home/maksym/.npmrc" = "deny"
+"/home/maksym/.pypirc" = "deny"
+"/home/maksym/.bash_history" = "deny"
+"/home/maksym/.python_history" = "deny"
+"/home/maksym/.vscode-server" = "deny"
+"/home/maksym/.local/share/keyrings" = "deny"
+# Local runtime sockets are available, except private approval/manager channels.
+"/run" = "read"
+# host_system provides user-service operations without exposing manager setters.
+"/run/user" = "deny"
+"/run/codex-root-broker" = "deny"
+"/run/credentials" = "deny"
 "/proc" = "deny"
 
 [permissions.telegram.filesystem.":workspace_roots"]
@@ -49,19 +64,8 @@ glob_scan_max_depth = 5
 "**/credentials.json" = "deny"
 "**/*.pem" = "deny"
 "**/*.key" = "deny"
+"**/bot.sqlite3*" = "deny"
 
 [permissions.telegram.network]
 enabled = true
-allow_local_binding = false
-
-[permissions.telegram.network.domains]
-"**.openai.com" = "allow"
-"learn.chatgpt.com" = "allow"
-"**.python.org" = "allow"
-"pypi.org" = "allow"
-"files.pythonhosted.org" = "allow"
-"**.github.com" = "allow"
-"raw.githubusercontent.com" = "allow"
-"registry.npmjs.org" = "allow"
-"**.readthedocs.io" = "allow"
-"core.telegram.org" = "allow"
+allow_local_binding = true
