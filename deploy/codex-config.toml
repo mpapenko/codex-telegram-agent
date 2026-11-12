@@ -1,0 +1,67 @@
+model = "gpt-6-luna"
+model_reasoning_effort = "high"
+approval_policy = "never"
+default_permissions = "telegram"
+web_search = "live"
+
+[features]
+network_proxy = true
+
+[agents]
+enabled = false
+
+[permissions.telegram.workspace_roots]
+"/home/maksym/projects" = true
+
+[permissions.telegram.filesystem]
+glob_scan_max_depth = 5
+":minimal" = "read"
+":slash_tmp" = "write"
+":tmpdir" = "write"
+"/home/maksym/projects" = "write"
+"/home/maksym/projects/codex-telegram-agent" = "read"
+"/home/maksym/projects/codex-root-broker" = "read"
+"/home/maksym/projects/luxpower-automation" = "read"
+"/home/maksym/projects/luxpower-telegram-bot" = "read"
+"/home/maksym/projects/.codex" = "deny"
+"/home/maksym/projects/.agents" = "deny"
+"/home/maksym/projects/luxpower-automation/state" = "deny"
+"/home/maksym/projects/luxpower-telegram-bot/state" = "deny"
+"/home/maksym/projects/luxpower-telegram-bot/config.toml" = "deny"
+"/home/maksym/.codex/auth.json" = "deny"
+"/home/maksym/.codex/config.toml" = "deny"
+"/home/maksym/.codex/sessions" = "deny"
+"/home/maksym/.codex/state_5.sqlite" = "deny"
+"/home/maksym/.codex/packages/standalone" = "read"
+"/home/maksym/.local/share/codex-telegram" = "deny"
+"/home/maksym/.ssh" = "deny"
+"/home/maksym/.aws" = "deny"
+"/home/maksym/.config" = "deny"
+"/run" = "deny"
+"/proc" = "deny"
+
+[permissions.telegram.filesystem.":workspace_roots"]
+"**/.env" = "deny"
+"**/*.env" = "deny"
+"**/.env.*" = "deny"
+"**/config.toml" = "deny"
+"**/auth.json" = "deny"
+"**/credentials.json" = "deny"
+"**/*.pem" = "deny"
+"**/*.key" = "deny"
+
+[permissions.telegram.network]
+enabled = true
+allow_local_binding = false
+
+[permissions.telegram.network.domains]
+"**.openai.com" = "allow"
+"learn.chatgpt.com" = "allow"
+"**.python.org" = "allow"
+"pypi.org" = "allow"
+"files.pythonhosted.org" = "allow"
+"**.github.com" = "allow"
+"raw.githubusercontent.com" = "allow"
+"registry.npmjs.org" = "allow"
+"**.readthedocs.io" = "allow"
+"core.telegram.org" = "allow"
